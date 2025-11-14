@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    container_name: holo1-vllm
+    ports:
+      - "8082:8082"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    command: >
+      --model Hcompany/Holo1-7B
+      --port 8082
+      --gpu-memory-utilization 0.9
+      --max-model-len 4096
+      --dtype bfloat16
+      --trust-remote-code
+      --enable-prefix-caching
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: customer-journey-api
+    ports:
+      - "8000:8000"
+    environment:
+      - VLLM_URL=http://vllm:8082
+      - MODEL_NAME=Hcompany/Holo1-7B
+    depends_on:
+      - vllm
+    volumes:
+      - ./screenshots:/app/screenshots
+      - ./journeys:/app/journeys
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: customer-journey-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  screenshots:
+  journeys:
