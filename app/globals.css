@@ -14,7 +14,7 @@
 
 @layer components {
   .bento-card {
-    @apply rounded-xl bg-white shadow-lg border border-gray-100 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+    @apply rounded-xl bg-white shadow-lg border border-gray-100 p-6 transition-shadow duration-300;
   }
   
   .float-card {

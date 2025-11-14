@@ -42,13 +42,16 @@ export default function Header() {
           {/* Desktop Navigation - Right */}
           <div className="hidden md:flex items-center gap-6">
             <a href="#how-it-works" className="text-dark/70 hover:text-primary transition-colors">
-              How
+              How It Works
             </a>
             <a href="#benefits" className="text-dark/70 hover:text-primary transition-colors">
               Benefits
             </a>
+            <a href="/dashboard" className="text-dark/70 hover:text-primary transition-colors">
+              Dashboard
+            </a>
             <button className="px-6 py-2 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-all">
-              Let's Go
+              Get Started
             </button>
           </div>
 
@@ -85,6 +88,13 @@ export default function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Benefits
+                </a>
+                <a
+                  href="/dashboard"
+                  className="text-dark/70 hover:text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
                 </a>
                 <button className="px-6 py-2 rounded-lg bg-primary text-white font-medium">
                   Get Started
