@@ -117,16 +117,12 @@ for i in {1..10}; do
     sleep 1
 done
 
-# 4. Démarrer Visual Builder
+# Visual Builder est maintenant intégré dans l'API sur /ui
 echo ""
-echo "🎨 [3/3] Démarrage Visual Builder..."
-nohup python3 -m http.server 8080 --bind 0.0.0.0 --directory /workspace/redflag \
-    > logs/visual_builder.log 2>&1 &
+echo "🎨 [3/3] Visual Builder intégré dans l'API"
+echo "   ✓ Accessible sur /ui"
 
-BUILDER_PID=$!
-echo "   ✓ Visual Builder démarré (PID: $BUILDER_PID)"
-
-sleep 2
+sleep 1
 
 # Récupérer IP publique
 PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s icanhazip.com 2>/dev/null || echo "YOUR_IP")
@@ -137,10 +133,10 @@ echo "========================================="
 echo "✅ Tous les services démarrés !"
 echo "========================================="
 echo ""
-echo "🌐 Accès:"
+echo "🌐 URLs d'Accès:"
 echo ""
 echo "  📺 Visual Builder:"
-echo "     http://$PUBLIC_IP:8080/visual_builder.html"
+echo "     http://$PUBLIC_IP:8000/ui"
 echo ""
 echo "  📡 API:"
 echo "     http://$PUBLIC_IP:8000"
@@ -151,8 +147,7 @@ echo "     http://$PUBLIC_IP:8082"
 echo ""
 echo "📊 Services:"
 echo "  - vLLM  (PID: $VLLM_PID)  Port: 8082"
-echo "  - API   (PID: $API_PID)   Port: 8000"
-echo "  - UI    (PID: $BUILDER_PID) Port: 8080"
+echo "  - API + UI (PID: $API_PID)   Port: 8000"
 echo ""
 echo "📝 Logs:"
 echo "  tail -f logs/vllm.log"

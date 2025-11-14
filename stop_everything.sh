@@ -7,11 +7,7 @@ echo "🛑 Arrêt de Tous les Services"
 echo "========================================="
 echo ""
 
-# Stop Visual Builder
-echo "🎨 Arrêt Visual Builder..."
-pkill -f "python.*http.server.*8080" && echo "  ✓ Visual Builder arrêté" || echo "  ℹ️  Pas actif"
-
-# Stop API
+# Stop API (qui inclut le Visual Builder maintenant)
 echo "⚡ Arrêt API..."
 pkill -f "uvicorn api.main" && echo "  ✓ API arrêtée" || echo "  ℹ️  Pas active"
 
@@ -26,11 +22,10 @@ sleep 2
 echo ""
 echo "🔍 Vérification..."
 
-if ps aux | grep -E "vllm|uvicorn|http.server.*8080" | grep -v grep > /dev/null; then
+if ps aux | grep -E "vllm|uvicorn" | grep -v grep > /dev/null; then
     echo "  ⚠️  Processus restants détectés, force kill..."
     pkill -9 -f "vllm.entrypoints"
     pkill -9 -f "uvicorn api.main"
-    pkill -9 -f "python.*http.server.*8080"
     sleep 1
 fi
 
