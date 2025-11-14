@@ -25,6 +25,25 @@ else
 fi
 echo ""
 
+# Check Visual Builder
+echo "🔍 Visual Builder (port 8080):"
+BUILDER_PROC=$(ps aux | grep "python.*http.server.*8080" | grep -v grep)
+if [ -n "$BUILDER_PROC" ]; then
+    BUILDER_PID=$(echo "$BUILDER_PROC" | awk '{print $2}')
+    echo "  ✓ Running (PID: $BUILDER_PID)"
+
+    # Test HTTP
+    if curl -s http://localhost:8080/visual_builder.html > /dev/null 2>&1; then
+        echo "  ✓ HTTP check: OK"
+        echo "  🌐 URL: http://localhost:8080/visual_builder.html"
+    else
+        echo "  ⚠️  HTTP check: FAILED"
+    fi
+else
+    echo "  ✗ Not running"
+fi
+echo ""
+
 # Check API
 echo "🔍 API (port 8000):"
 API_PROC=$(ps aux | grep "uvicorn api.main" | grep -v grep)
