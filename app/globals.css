@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 1rem;
+  }
+  
+  body {
+    @apply bg-[#EEDED2] text-dark antialiased;
+  }
+}
+
+@layer components {
+  .bento-card {
+    @apply rounded-xl bg-white shadow-lg border border-gray-100 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+  }
+  
+  .float-card {
+    @apply rounded-xl bg-white/90 backdrop-blur-sm shadow-md border border-gray-100 transition-all duration-300;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
