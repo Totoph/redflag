@@ -2,6 +2,7 @@
 Customer Journey Runner - Intégration avec Surfer-H et Holo1
 """
 import asyncio
+import os
 from playwright.async_api import async_playwright
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -18,7 +19,11 @@ class CustomerJourneyRunner:
     def __init__(self, vllm_url: str, model_name: str):
         self.vllm_url = vllm_url
         self.model_name = model_name
-        self.screenshots_dir = Path("/app/screenshots")
+        # Support both Docker and local paths
+        if os.path.exists("/app"):
+            self.screenshots_dir = Path("/app/screenshots")
+        else:
+            self.screenshots_dir = Path("./screenshots")
         self.screenshots_dir.mkdir(exist_ok=True)
 
     async def run_journey(
