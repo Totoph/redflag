@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Journey Visual Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #60a5fa;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        input, button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        input {
+            flex: 1;
+            min-width: 300px;
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+
+        .viewer {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .sidebar {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .status-card {
+            background: #334155;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-running { background: #fbbf24; color: #78350f; }
+        .status-completed { background: #34d399; color: #064e3b; }
+        .status-failed { background: #f87171; color: #7f1d1d; }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #475569;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transition: width 0.3s;
+        }
+
+        .screenshot-container {
+            position: relative;
+            background: #0f172a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .screenshot-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .screenshot-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .actions-list {
+            list-style: none;
+        }
+
+        .action-item {
+            background: #1e293b;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            border-left: 3px solid #3b82f6;
+            font-size: 13px;
+        }
+
+        .action-step {
+            color: #60a5fa;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        .spinner {
+            border: 3px solid #334155;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #7f1d1d;
+            color: #fecaca;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Customer Journey Visual Builder</h1>
+            <p>Observez l'agent naviguer en temps réel</p>
+
+            <div class="controls">
+                <input type="text" id="apiUrl" placeholder="API URL" value="http://localhost:8000">
+                <input type="url" id="siteUrl" placeholder="Site URL" value="https://alib-aroma.lovable.app/">
+                <input type="text" id="task" placeholder="Task description" value="Browse the site, explore products, add item to cart">
+                <button id="startBtn" onclick="startJourney()">🚀 Start Journey</button>
+                <button id="stopBtn" onclick="stopJourney()" disabled>⏹️ Stop</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="viewer">
+                <h2 style="margin-bottom: 15px;">📺 Live View</h2>
+                <div id="screenshotArea" class="loading">
+                    <div class="spinner"></div>
+                    <p>En attente d'un journey...</p>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="status-card">
+                    <h3 style="margin-bottom: 10px;">📊 Status</h3>
+                    <div id="statusBadge" class="status-badge" style="background: #475569;">Idle</div>
+                    <div id="progressInfo" style="font-size: 14px; color: #94a3b8;">--</div>
+                    <div class="progress-bar">
+                        <div id="progressBar" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div id="durationInfo" style="font-size: 12px; color: #64748b; margin-top: 5px;">--</div>
+                </div>
+
+                <div class="status-card">
+                    <h3 style="margin-bottom: 10px;">📝 Actions</h3>
+                    <ul id="actionsList" class="actions-list">
+                        <li style="color: #64748b; font-size: 13px;">Aucune action pour le moment</li>
+                    </ul>
+                </div>
+
+                <div class="status-card">
+                    <h3 style="margin-bottom: 10px;">ℹ️ Info</h3>
+                    <div id="journeyInfo" style="font-size: 13px; color: #94a3b8;">
+                        Journey ID: --<br>
+                        URL: --<br>
+                        Steps: --
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentJourneyId = null;
+        let pollInterval = null;
+        let startTime = null;
+        let API_URL = 'http://localhost:8000';
+
+        function updateApiUrl() {
+            API_URL = document.getElementById('apiUrl').value.replace(/\/$/, '');
+        }
+
+        async function startJourney() {
+            updateApiUrl();
+
+            const siteUrl = document.getElementById('siteUrl').value;
+            const task = document.getElementById('task').value;
+
+            if (!siteUrl || !task) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+
+            try {
+                const response = await fetch(`${API_URL}/journey/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: siteUrl,
+                        task: task,
+                        max_steps: 20,
+                        screenshot_every_step: true
+                    })
+                });
+
+                const data = await response.json();
+                currentJourneyId = data.journey_id;
+                startTime = Date.now();
+
+                updateStatus('running', 'Journey started...');
+                startPolling();
+
+            } catch (error) {
+                console.error('Error starting journey:', error);
+                document.getElementById('screenshotArea').innerHTML =
+                    `<div class="error">Error: ${error.message}</div>`;
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            }
+        }
+
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+
+            pollInterval = setInterval(async () => {
+                if (!currentJourneyId) return;
+
+                try {
+                    const response = await fetch(`${API_URL}/journey/${currentJourneyId}`);
+                    const journey = await response.json();
+
+                    updateUI(journey);
+
+                    if (journey.status !== 'running') {
+                        stopPolling();
+                        document.getElementById('startBtn').disabled = false;
+                        document.getElementById('stopBtn').disabled = true;
+                    }
+                } catch (error) {
+                    console.error('Error polling:', error);
+                }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        async function stopJourney() {
+            if (!currentJourneyId) return;
+
+            try {
+                await fetch(`${API_URL}/journey/${currentJourneyId}/cancel`, {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Error stopping:', error);
+            }
+
+            stopPolling();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+
+        function updateUI(journey) {
+            // Status
+            updateStatus(journey.status, getStatusText(journey.status));
+
+            // Progress
+            const progress = (journey.steps_completed / journey.steps_total) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressInfo').textContent =
+                `${journey.steps_completed} / ${journey.steps_total} steps`;
+
+            // Duration
+            const elapsed = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+            document.getElementById('durationInfo').textContent =
+                `Duration: ${elapsed}s`;
+
+            // Journey Info
+            document.getElementById('journeyInfo').innerHTML = `
+                Journey ID: ${journey.journey_id.substring(0, 8)}...<br>
+                URL: ${journey.url}<br>
+                Steps: ${journey.steps_completed}/${journey.steps_total}
+            `;
+
+            // Actions
+            updateActions(journey.actions);
+
+            // Screenshot
+            updateScreenshot(journey.steps_completed);
+        }
+
+        function updateStatus(status, text) {
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = text;
+            badge.className = `status-badge status-${status}`;
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'running': '🏃 Running',
+                'completed': '✅ Completed',
+                'failed': '❌ Failed',
+                'cancelled': '⏹️ Cancelled'
+            };
+            return texts[status] || status;
+        }
+
+        function updateActions(actions) {
+            const list = document.getElementById('actionsList');
+
+            if (!actions || actions.length === 0) {
+                list.innerHTML = '<li style="color: #64748b; font-size: 13px;">No actions yet</li>';
+                return;
+            }
+
+            list.innerHTML = actions.map(action => `
+                <li class="action-item">
+                    <span class="action-step">Step ${action.step}:</span>
+                    ${action.action} ${action.target || ''}
+                </li>
+            `).join('');
+
+            // Auto-scroll to bottom
+            list.scrollTop = list.scrollHeight;
+        }
+
+        async function updateScreenshot(step) {
+            if (!currentJourneyId || step < 0) return;
+
+            const screenshotUrl = `${API_URL}/journey/${currentJourneyId}/screenshot/${step}`;
+
+            document.getElementById('screenshotArea').innerHTML = `
+                <div class="screenshot-container">
+                    <img src="${screenshotUrl}" alt="Step ${step}" onerror="this.style.display='none'">
+                    <div class="screenshot-overlay">Step ${step}</div>
+                </div>
+            `;
+        }
+
+        // Update API URL when changed
+        document.getElementById('apiUrl').addEventListener('change', updateApiUrl);
+    </script>
+</body>
+</html>
