@@ -63,8 +63,8 @@ echo -e "${BLUE}[TEST]${NC} Start journey"
 response=$(curl -s -X POST "$API_URL/journey/start" \
     -H "Content-Type: application/json" \
     -d '{
-        "url": "https://demo.playwright.dev/todomvc",
-        "task": "Add 3 todo items, mark first as complete",
+        "url": "https://aroma-zone.com",
+        "task": "Add 1 article to the cart and go to the checkout",
         "max_steps": 10,
         "screenshot_every_step": true
     }')
