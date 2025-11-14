@@ -3,7 +3,7 @@ Customer Journey API - Powered by Surfer-H and Holo1
 """
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, HttpUrl, Field
 from typing import Optional, List, Dict, Any
@@ -111,6 +111,7 @@ async def root():
         "version": "1.0.0",
         "status": "running",
         "endpoints": {
+            "visual_builder": "/ui",
             "docs": "/docs",
             "health": "/health",
             "start_journey": "/journey/start",
@@ -121,6 +122,16 @@ async def root():
             "stats": "/stats"
         }
     }
+
+
+@app.get("/ui", response_class=HTMLResponse)
+async def visual_builder_ui():
+    """Visual Builder UI"""
+    visual_builder_path = Path("visual_builder.html")
+    if visual_builder_path.exists():
+        return FileResponse(visual_builder_path, media_type="text/html")
+    else:
+        return HTMLResponse(content="<h1>Visual Builder not found</h1><p>File visual_builder.html is missing</p>", status_code=404)
 
 
 @app.get("/health")
