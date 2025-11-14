@@ -126,12 +126,210 @@ async def root():
 
 @app.get("/ui", response_class=HTMLResponse)
 async def visual_builder_ui():
-    """Visual Builder UI"""
-    visual_builder_path = Path("visual_builder.html")
-    if visual_builder_path.exists():
-        return FileResponse(visual_builder_path, media_type="text/html")
-    else:
-        return HTMLResponse(content="<h1>Visual Builder not found</h1><p>File visual_builder.html is missing</p>", status_code=404)
+    """Live Visual Builder - Embedded"""
+    html_content = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Journey Live View</title>
+    <meta charset="utf-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #1a1a1a; color: #fff; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #4CAF50; margin-bottom: 20px; }
+        .controls { background: #2a2a2a; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        input, button { padding: 12px; margin: 5px; border: none; border-radius: 5px; font-size: 14px; }
+        input { background: #3a3a3a; color: #fff; flex: 1; min-width: 300px; }
+        button { background: #4CAF50; color: white; cursor: pointer; font-weight: bold; }
+        button:hover { background: #45a049; }
+        button:disabled { background: #666; cursor: not-allowed; }
+        .viewer { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .screenshot-area { background: #2a2a2a; padding: 20px; border-radius: 8px; min-height: 400px; }
+        .screenshot-area img { width: 100%; border-radius: 5px; }
+        .info-area { background: #2a2a2a; padding: 20px; border-radius: 8px; }
+        .status { padding: 10px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; text-align: center; }
+        .status.running { background: #ff9800; color: #000; }
+        .status.completed { background: #4CAF50; }
+        .status.failed { background: #f44336; }
+        .progress { background: #3a3a3a; height: 25px; border-radius: 5px; margin: 10px 0; overflow: hidden; }
+        .progress-bar { background: linear-gradient(90deg, #4CAF50, #8BC34A); height: 100%; transition: width 0.3s; line-height: 25px; text-align: center; font-weight: bold; }
+        .actions { max-height: 300px; overflow-y: auto; }
+        .action { background: #3a3a3a; padding: 8px; margin: 5px 0; border-radius: 4px; font-size: 13px; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Customer Journey Live View</h1>
+
+        <div class="controls">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="url" id="url" placeholder="Site URL" value="https://alib-aroma.lovable.app/">
+                <input type="text" id="task" placeholder="Task description" value="Browse site, explore products, add to cart">
+                <button id="startBtn" onclick="startJourney()">▶️ Start</button>
+                <button id="stopBtn" onclick="stopJourney()" disabled>⏹️ Stop</button>
+            </div>
+        </div>
+
+        <div class="viewer">
+            <div class="screenshot-area">
+                <h3 style="margin-bottom: 15px;">📸 Live Screenshot</h3>
+                <div id="screenshotView" class="loading">Waiting for journey...</div>
+            </div>
+
+            <div class="info-area">
+                <div id="statusBadge" class="status" style="background: #3a3a3a;">Idle</div>
+
+                <div style="margin: 15px 0;">
+                    <strong>Progress:</strong>
+                    <div class="progress">
+                        <div id="progressBar" class="progress-bar" style="width: 0%;">0%</div>
+                    </div>
+                    <div id="progressText" style="text-align: center; margin-top: 5px;">-</div>
+                </div>
+
+                <div style="margin: 15px 0;">
+                    <strong>Journey ID:</strong>
+                    <div id="journeyId" style="font-family: monospace; font-size: 12px;">-</div>
+                </div>
+
+                <div style="margin: 15px 0;">
+                    <strong>Duration:</strong>
+                    <div id="duration">-</div>
+                </div>
+
+                <h4 style="margin: 15px 0;">Actions:</h4>
+                <div id="actionsList" class="actions">
+                    <div style="color: #666;">No actions yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let journeyId = null;
+        let pollInterval = null;
+        let startTime = null;
+
+        async function startJourney() {
+            const url = document.getElementById('url').value;
+            const task = document.getElementById('task').value;
+
+            if (!url || !task) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+
+            try {
+                const response = await fetch('/journey/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url, task, max_steps: 20, screenshot_every_step: true})
+                });
+
+                const data = await response.json();
+                journeyId = data.journey_id;
+                startTime = Date.now();
+
+                document.getElementById('journeyId').textContent = journeyId.substring(0, 16) + '...';
+                document.getElementById('statusBadge').textContent = '🏃 Running';
+                document.getElementById('statusBadge').className = 'status running';
+
+                startPolling();
+            } catch (error) {
+                alert('Error: ' + error.message);
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            }
+        }
+
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+
+            pollInterval = setInterval(async () => {
+                if (!journeyId) return;
+
+                try {
+                    const response = await fetch(`/journey/${journeyId}`);
+                    const data = await response.json();
+
+                    updateUI(data);
+
+                    if (data.status !== 'running') {
+                        stopPolling();
+                        document.getElementById('startBtn').disabled = false;
+                        document.getElementById('stopBtn').disabled = true;
+                    }
+                } catch (error) {
+                    console.error('Poll error:', error);
+                }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        async function stopJourney() {
+            if (!journeyId) return;
+
+            try {
+                await fetch(`/journey/${journeyId}/cancel`, {method: 'POST'});
+            } catch (error) {
+                console.error('Stop error:', error);
+            }
+
+            stopPolling();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+
+        function updateUI(data) {
+            // Status
+            const statusMap = {
+                'running': '🏃 Running',
+                'completed': '✅ Completed',
+                'failed': '❌ Failed',
+                'cancelled': '⏹️ Cancelled'
+            };
+            document.getElementById('statusBadge').textContent = statusMap[data.status] || data.status;
+            document.getElementById('statusBadge').className = 'status ' + data.status;
+
+            // Progress
+            const progress = Math.round((data.steps_completed / data.steps_total) * 100);
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressBar').textContent = progress + '%';
+            document.getElementById('progressText').textContent = `${data.steps_completed} / ${data.steps_total} steps`;
+
+            // Duration
+            const elapsed = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+            document.getElementById('duration').textContent = elapsed + 's';
+
+            // Screenshot
+            if (data.steps_completed > 0) {
+                document.getElementById('screenshotView').innerHTML =
+                    `<img src="/journey/${journeyId}/screenshot/${data.steps_completed - 1}" alt="Step ${data.steps_completed - 1}">`;
+            }
+
+            // Actions
+            if (data.actions && data.actions.length > 0) {
+                document.getElementById('actionsList').innerHTML = data.actions.map(a =>
+                    `<div class="action">Step ${a.step}: ${a.action} ${a.target || ''}</div>`
+                ).join('');
+            }
+        }
+    </script>
+</body>
+</html>
+    """
+    return HTMLResponse(content=html_content)
 
 
 @app.get("/health")
