@@ -29,8 +29,8 @@ const mockScanData = {
     {
       id: 1,
       severity: "critical",
-      type: "Broken Checkout Flow",
-      message: "Payment button becomes unresponsive after cart update",
+      type: "Payment Error",
+      message: "Page doesn't memorize content in case of network crash, causing payment failures and lost customer data",
       location: "/checkout",
       impact: "High - Blocks purchase completion",
       affectedUsers: "~45% of checkout attempts",

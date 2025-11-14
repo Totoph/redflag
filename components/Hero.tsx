@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +9,7 @@ import { toast } from "sonner";
 export default function Hero() {
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
+  const router = useRouter();
 
   const handleScan = async () => {
     if (!url) {
@@ -24,32 +26,11 @@ export default function Hero() {
     }
 
     setIsScanning(true);
-    toast.info("Starting scan...");
 
-    try {
-      const response = await fetch("/api/scan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success("Scan completed successfully!");
-        console.log("Scan results:", data);
-        // Handle successful scan - redirect to results page or display results
-      } else {
-        toast.error(data.error || "Scan failed");
-      }
-    } catch (error) {
-      toast.error("An error occurred during the scan");
-      console.error("Scan error:", error);
-    } finally {
-      setIsScanning(false);
-    }
+    // Simulate a brief delay then redirect to scanning page
+    setTimeout(() => {
+      router.push(`/scanning?url=${encodeURIComponent(url)}`);
+    }, 500);
   };
 
   return (
