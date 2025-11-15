@@ -61,7 +61,7 @@ export default function ScanningPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="bento-card p-0 overflow-hidden max-w-md mx-auto"
+            className="bento-card p-0 overflow-hidden max-w-2xl mx-auto"
           >
             {videoError && (
               <div className="bg-yellow-100 text-yellow-800 p-4 mb-4 rounded">
